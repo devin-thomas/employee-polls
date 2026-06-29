@@ -62,6 +62,11 @@ function renderApp() {
   );
 }
 
+function renderAppAtRoute(route) {
+  window.history.pushState({}, "", route);
+  return renderApp();
+}
+
 describe("selectors", () => {
   test("sorts leaderboard users by total score", () => {
     const state = makeEmptyState();
@@ -146,6 +151,23 @@ describe("Employee Polls", () => {
     );
   });
 
+  test("asks the user to log in before showing a requested protected page", async () => {
+    const user = userEvent.setup();
+    renderAppAtRoute("/add");
+
+    expect(await screen.findByText("Sign in")).toBeInTheDocument();
+    expect(screen.queryByText("Would you rather...")).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Username"), "sarahedo");
+    await user.type(screen.getByLabelText("Password"), "password123");
+    await user.click(screen.getByRole("button", { name: "Login" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Would you rather..." })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create poll" })).toBeInTheDocument();
+  });
+
   test("creates a new poll", async () => {
     const user = userEvent.setup();
     renderApp();
@@ -189,6 +211,22 @@ describe("Employee Polls", () => {
         answer: "optionOne",
       })
     );
+  });
+
+  test("shows login first and then 404 for an invalid question id", async () => {
+    const user = userEvent.setup();
+    renderAppAtRoute("/questions/not-a-real-question");
+
+    expect(await screen.findByText("Sign in")).toBeInTheDocument();
+    expect(screen.queryByText("That poll does not exist")).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Username"), "sarahedo");
+    await user.type(screen.getByLabelText("Password"), "password123");
+    await user.click(screen.getByRole("button", { name: "Login" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "That poll does not exist" })
+    ).toBeInTheDocument();
   });
 
   test("renders leaderboard totals in descending order", async () => {
