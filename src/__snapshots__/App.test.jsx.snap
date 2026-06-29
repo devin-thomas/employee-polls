@@ -1,0 +1,66 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Employee Polls > matches the login page snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="app-shell"
+  >
+    <main
+      class="content"
+    >
+      <div
+        class="centered-panel"
+      >
+        <form
+          class="card auth-card"
+        >
+          <p
+            class="eyebrow"
+          >
+            Stand-out login flow
+          </p>
+          <h1>
+            Sign in
+          </h1>
+          <p>
+            Use one of the seeded users from the fake backend to enter the app.
+          </p>
+          <label>
+            Username
+            <input
+              type="text"
+              value=""
+            />
+          </label>
+          <label>
+            Password
+            <input
+              type="password"
+              value=""
+            />
+          </label>
+          <button
+            class="button"
+            type="submit"
+          >
+            Login
+          </button>
+          <div
+            class="hint-list"
+          >
+            <strong>
+              Seeded users
+            </strong>
+            <span>
+              \`sarahedo\` / \`password123\`
+            </span>
+            <span>
+              \`tylermcginnis\` / \`abc321\`
+            </span>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+</DocumentFragment>
+`;
