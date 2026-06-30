@@ -67,6 +67,12 @@ function renderAppAtRoute(route) {
   return renderApp();
 }
 
+async function loginAs(user, username = "sarahedo", password = "password123") {
+  await user.type(screen.getByLabelText("Username"), username);
+  await user.type(screen.getByLabelText("Password"), password);
+  await user.click(screen.getByRole("button", { name: "Login" }));
+}
+
 describe("selectors", () => {
   test("sorts leaderboard users by total score", () => {
     const state = makeEmptyState();
@@ -79,6 +85,7 @@ describe("selectors", () => {
 
 describe("Employee Polls", () => {
   beforeEach(() => {
+    window.history.pushState({}, "", "/");
     window.sessionStorage.clear();
     api.loadInitialData.mockResolvedValue(structuredClone(mockData));
     api.saveQuestion.mockResolvedValue({
@@ -139,9 +146,7 @@ describe("Employee Polls", () => {
     renderApp();
 
     await screen.findByText("Sign in");
-    await user.type(screen.getByLabelText("Username"), "sarahedo");
-    await user.type(screen.getByLabelText("Password"), "password123");
-    await user.click(screen.getByRole("button", { name: "Login" }));
+    await loginAs(user);
 
     expect(
       (await screen.findAllByRole("link", { name: "View poll" })).length
@@ -158,9 +163,7 @@ describe("Employee Polls", () => {
     expect(await screen.findByText("Sign in")).toBeInTheDocument();
     expect(screen.queryByText("Would you rather...")).not.toBeInTheDocument();
 
-    await user.type(screen.getByLabelText("Username"), "sarahedo");
-    await user.type(screen.getByLabelText("Password"), "password123");
-    await user.click(screen.getByRole("button", { name: "Login" }));
+    await loginAs(user);
 
     expect(
       await screen.findByRole("heading", { name: "Would you rather..." })
@@ -168,14 +171,55 @@ describe("Employee Polls", () => {
     expect(screen.getByRole("button", { name: "Create poll" })).toBeInTheDocument();
   });
 
+  test("logs out on address-bar reload and returns to the requested page after login", async () => {
+    const user = userEvent.setup();
+    window.sessionStorage.setItem("employee-polls-session", "sarahedo");
+    renderAppAtRoute("/leaderboard?sort=points#top");
+
+    expect(await screen.findByText("Sign in")).toBeInTheDocument();
+    expect(screen.queryByText("Participation by user")).not.toBeInTheDocument();
+
+    await loginAs(user);
+
+    expect(
+      await screen.findByRole("heading", { name: "Participation by user" })
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/leaderboard");
+    expect(window.location.search).toBe("?sort=points");
+    expect(window.location.hash).toBe("#top");
+  });
+
+  test("manual logout lets the next login start at home", async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await screen.findByText("Sign in");
+    await loginAs(user);
+    await user.click(await screen.findByRole("link", { name: "Leaderboard" }));
+    await screen.findByRole("heading", { name: "Participation by user" });
+    await user.click(screen.getByRole("button", { name: "Logout" }));
+
+    expect(await screen.findByText("Sign in")).toBeInTheDocument();
+
+    await loginAs(user, "tylermcginnis", "abc321");
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Vote, compare, and keep decisions visible",
+      })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Unanswered (1)" })).toHaveClass(
+      "tab-active"
+    );
+    expect(window.location.pathname).toBe("/");
+  });
+
   test("creates a new poll", async () => {
     const user = userEvent.setup();
     renderApp();
 
     await screen.findByText("Sign in");
-    await user.type(screen.getByLabelText("Username"), "sarahedo");
-    await user.type(screen.getByLabelText("Password"), "password123");
-    await user.click(screen.getByRole("button", { name: "Login" }));
+    await loginAs(user);
 
     await user.click(await screen.findByRole("link", { name: "New Poll" }));
     await user.type(screen.getByLabelText("First option"), "Remote");
@@ -196,9 +240,7 @@ describe("Employee Polls", () => {
     renderApp();
 
     await screen.findByText("Sign in");
-    await user.type(screen.getByLabelText("Username"), "sarahedo");
-    await user.type(screen.getByLabelText("Password"), "password123");
-    await user.click(screen.getByRole("button", { name: "Login" }));
+    await loginAs(user);
 
     const pollLinks = await screen.findAllByRole("link", { name: "View poll" });
     await user.click(pollLinks[0]);
@@ -220,9 +262,7 @@ describe("Employee Polls", () => {
     expect(await screen.findByText("Sign in")).toBeInTheDocument();
     expect(screen.queryByText("That poll does not exist")).not.toBeInTheDocument();
 
-    await user.type(screen.getByLabelText("Username"), "sarahedo");
-    await user.type(screen.getByLabelText("Password"), "password123");
-    await user.click(screen.getByRole("button", { name: "Login" }));
+    await loginAs(user);
 
     expect(
       await screen.findByRole("heading", { name: "That poll does not exist" })
@@ -234,9 +274,7 @@ describe("Employee Polls", () => {
     renderApp();
 
     await screen.findByText("Sign in");
-    await user.type(screen.getByLabelText("Username"), "sarahedo");
-    await user.type(screen.getByLabelText("Password"), "password123");
-    await user.click(screen.getByRole("button", { name: "Login" }));
+    await loginAs(user);
     await user.click(await screen.findByRole("link", { name: "Leaderboard" }));
 
     expect(

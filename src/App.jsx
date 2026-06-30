@@ -28,12 +28,29 @@ const Router = window.location.hostname.includes("github.io")
   ? HashRouter
   : BrowserRouter;
 
+function getRedirectTarget(fromLocation) {
+  if (!fromLocation || fromLocation.pathname === "/login") {
+    return "/";
+  }
+
+  return `${fromLocation.pathname}${fromLocation.search || ""}${
+    fromLocation.hash || ""
+  }`;
+}
+
 function ProtectedRoute({ children }) {
   const authedUser = useSelector((state) => state.session.authedUser);
+  const manualLogout = useSelector((state) => state.session.manualLogout);
   const location = useLocation();
 
   if (!authedUser) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={manualLogout ? null : { from: location }}
+      />
+    );
   }
 
   return children;
@@ -41,6 +58,7 @@ function ProtectedRoute({ children }) {
 
 function AppLayout({ children }) {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const authedUser = useSelector(selectAuthedUser);
 
   return (
@@ -60,7 +78,10 @@ function AppLayout({ children }) {
             <span>{authedUser.name}</span>
             <button
               className="button button-secondary"
-              onClick={() => dispatch(logout())}
+              onClick={() => {
+                navigate("/login", { replace: true, state: null });
+                dispatch(logout());
+              }}
             >
               Logout
             </button>
@@ -79,7 +100,7 @@ function LoginPage() {
   const { status, error } = useSelector((state) => state.session);
   const [form, setForm] = useState({ username: "", password: "" });
 
-  const targetPath = location.state?.from?.pathname || "/";
+  const targetPath = getRedirectTarget(location.state?.from);
 
   useEffect(() => {
     dispatch(clearError());

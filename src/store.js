@@ -10,28 +10,6 @@ import {
   saveQuestionAnswer,
 } from "./api";
 
-const SESSION_STORAGE_KEY = "employee-polls-session";
-
-function readSessionUser() {
-  try {
-    return window.sessionStorage.getItem(SESSION_STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
-
-function writeSessionUser(userId) {
-  try {
-    if (userId) {
-      window.sessionStorage.setItem(SESSION_STORAGE_KEY, userId);
-    } else {
-      window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
-    }
-  } catch {
-    // Session persistence is best-effort only.
-  }
-}
-
 export const initializeApp = createAsyncThunk(
   "polls/initializeApp",
   async () => fetchInitialData()
@@ -46,7 +24,6 @@ export const loginUser = createAsyncThunk(
       return rejectWithValue("Incorrect username or password.");
     }
 
-    writeSessionUser(user.id);
     return user.id;
   }
 );
@@ -108,15 +85,16 @@ const pollsSlice = createSlice({
 const sessionSlice = createSlice({
   name: "session",
   initialState: {
-    authedUser: readSessionUser(),
+    authedUser: null,
     status: "idle",
     error: "",
+    manualLogout: false,
   },
   reducers: {
     logout(state) {
       state.authedUser = null;
       state.error = "";
-      writeSessionUser(null);
+      state.manualLogout = true;
     },
     clearError(state) {
       state.error = "";
@@ -131,6 +109,7 @@ const sessionSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.authedUser = action.payload;
+        state.manualLogout = false;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.status = "failed";
@@ -196,6 +175,7 @@ export function makeEmptyState() {
       authedUser: null,
       status: "idle",
       error: "",
+      manualLogout: false,
     },
   };
 }
