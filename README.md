@@ -6,7 +6,7 @@ Live site: https://devin-thomas.github.io/employee-polls/
 
 ## Features
 
-- Username and password login with session persistence
+- Username and password login for seeded users
 - Answered and unanswered poll views sorted by recency
 - Poll detail pages with vote totals, percentages, and the current user's selection
 - New poll creation flow backed by the provided fake API
@@ -50,17 +50,17 @@ npm run lint
 
 ## Testing
 
-The project includes 12 passing tests that cover:
+The project includes 16 passing tests that cover:
 
 - `_saveQuestion` success and failure cases
 - `_saveQuestionAnswer` success and failure cases
 - snapshot rendering
 - DOM interaction with `fireEvent`
-- login, voting, poll creation, and leaderboard behavior
+- login redirects, logout, voting, poll creation, and leaderboard behavior
 
 ## Implementation Notes
 
-- The Redux store is the source of truth for authenticated session state, users, and polls.
+- The Redux store is the source of truth for authenticated session state, users, and polls. Auth state is intentionally memory-only so a hard-loaded protected URL asks the user to log in before showing the requested page.
 - The starter `_DATA.js` module remains the fake backend, with avatar URLs generated at load time so the UI stays self-contained.
 - Routing uses `HashRouter` on GitHub Pages and `BrowserRouter` locally. Vite's production base path is pinned to `/employee-polls/` so deployed assets resolve correctly.
 
